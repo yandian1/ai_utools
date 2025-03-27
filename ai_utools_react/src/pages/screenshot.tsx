@@ -1,10 +1,10 @@
-import {Button, Input, Space} from 'antd';
-import {useRef, useState, useEffect} from "react";
-import {v4} from 'uuid';
-import {base64toBlob, clipboardCopy} from '../utils';
-import {uploadImg} from '../api';
+import { Button, Input, Space } from 'antd';
+import { useRef, useState, useEffect } from "react";
+import { v4 } from 'uuid';
+import { base64toBlob, clipboardCopy } from '../utils';
+import { uploadImg } from '../api';
 import { debounce } from 'lodash-es';
-import {ClipboardImgPrefix, ClipboardImgSuffix} from "../constant";
+import { ClipboardImgPrefix, ClipboardImgSuffix } from "../constant";
 const { ipcRenderer } = require('electron');
 
 export default function Screenshot() {
@@ -28,7 +28,7 @@ export default function Screenshot() {
     const mouseEndX = useRef(0);
     const mouseEndY = useRef(0);
 
-    ipcRenderer.on("initScreenshot", debounce((event: Recordable, data :{ screenData: string, width: number, height: number }) => {
+    ipcRenderer.on("initScreenshot", debounce((event: Recordable, data: { screenData: string, width: number, height: number }) => {
         setWindowWidth(data.width);
         setWindowHeight(data.height);
         setScreenData(data.screenData);
@@ -157,7 +157,7 @@ export default function Screenshot() {
 
     return (
         <>
-            <div className={'fixed z-40'} style={{...searchStyle}}>
+            <div className={'fixed z-40'} style={{ ...searchStyle }}>
                 <Space.Compact>
                     <Input
                         placeholder="请输入描述" className={'w-[350px]'}
@@ -172,14 +172,14 @@ export default function Screenshot() {
             </div>
 
             <canvas id="bg" ref={bgCanvas}
-                    className={'fixed z-10 top-0 left-0'}
-                    width={windowWidth} height={windowHeight}/>
+                className={'fixed z-10 top-0 left-0'}
+                width={windowWidth} height={windowHeight} />
 
-            <div className={'fixed z-20 left-0 top-0 w-full h-full border border-red-500'}></div>
+            <div className={'fixed z-20 left-0 top-0 w-full h-full border-[3px] border-blue-500 rounded-l p-4'}></div>
 
             <canvas id="select" ref={selectCanvas}
-                    className={'fixed z-30 top-0 left-0'}
-                    width={windowWidth} height={windowHeight}/>
+                className={'fixed z-30 top-0 left-0'}
+                width={windowWidth} height={windowHeight} />
         </>
     );
 }

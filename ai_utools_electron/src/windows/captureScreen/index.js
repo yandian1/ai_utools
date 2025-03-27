@@ -36,6 +36,7 @@ export class CaptureScreenWin {
                 nodeIntegration: true,
                 contextIsolation: false,
                 webSecurity: false,
+                devTools: !app.isPackaged,
             },
         });
 

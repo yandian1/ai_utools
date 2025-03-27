@@ -1,17 +1,17 @@
-import {UserOutlined} from '@ant-design/icons';
-import {Button, type GetProp, Image, Input, Space, Typography} from 'antd';
-import {Bubble, BubbleProps} from '@ant-design/x';
-import {useRef, useState} from 'react';
+import { UserOutlined } from '@ant-design/icons';
+import { Button, type GetProp, Image, Input, Space, Typography } from 'antd';
+import { Bubble, BubbleProps } from '@ant-design/x';
+import { useRef, useState } from 'react';
 import useGlobalSearch from '../hooks/useGlobalSearch';
 import markdownit from 'markdown-it';
-import {chat} from '../utils/openAi.ts';
-import {uploadImg} from '../api';
-import {base64toBlob} from "../utils";
-import {ClipboardImgPrefix, ClipboardImgSuffix} from "../constant";
+import { chat } from '../utils/openAi.ts';
+import { uploadImg } from '../api';
+import { base64toBlob } from "../utils";
+import { ClipboardImgPrefix, ClipboardImgSuffix } from "../constant";
 const { ipcRenderer } = require('electron');
 
 const { TextArea } = Input;
-const md = markdownit({html: true, breaks: true});
+const md = markdownit({ html: true, breaks: true });
 
 type ChatItem = {
     role: 'system' | 'user'
@@ -33,7 +33,7 @@ const imageTextList: ImageText[] = []
 const roles: GetProp<typeof Bubble.List, 'roles'> = {
     ai: {
         placement: 'start',
-        avatar: {icon: <UserOutlined/>, style: {background: '#fde3cf'}},
+        avatar: { icon: <UserOutlined />, style: { background: '#fde3cf' } },
         styles: {
             avatar: {
                 marginLeft: '15vw'
@@ -46,7 +46,7 @@ const roles: GetProp<typeof Bubble.List, 'roles'> = {
     },
     local: {
         placement: 'end',
-        avatar: {icon: <UserOutlined/>, style: {background: '#87d068'}},
+        avatar: { icon: <UserOutlined />, style: { background: '#87d068' } },
         styles: {
             avatar: {
                 marginRight: '15vw'
@@ -61,7 +61,7 @@ const roles: GetProp<typeof Bubble.List, 'roles'> = {
 
 const renderMarkdown: BubbleProps['messageRender'] = (content) => (
     <Typography>
-        <div dangerouslySetInnerHTML={{__html: md.render(content)}}/>
+        <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
     </Typography>
 );
 
@@ -71,6 +71,7 @@ export default function Home() {
     const [chatList, setChatList] = useState([] as ChatItem[])
     const [attachmentList, setAttachmentList] = useState([] as Attachment[])
     const abortController = useRef<AbortController>(null);
+    const searchLock = useRef(false);
 
     ipcRenderer.on("sendImageText", (event: Recordable, data: { message: string, imgUrl: string, uuid: string }) => {
         if (imageTextList.some((item) => item.uuid === data.uuid)) return
@@ -80,10 +81,13 @@ export default function Home() {
     })
 
     const sendChatRequest = async (message: string, imgUrl?: string | string[]) => {
+        if (searchLock.current) return;
+        searchLock.current = true;
+
         setChatList(prevState => [
             ...prevState,
-            {role: 'user', message, imgUrl},
-            {role: 'system', loading: true}
+            { role: 'user', message, imgUrl },
+            { role: 'system', loading: true }
         ])
 
         setSearchLoading(true)
@@ -97,8 +101,8 @@ export default function Home() {
             updateChatList: updateChatList,
         });
 
-
         setSearchLoading(false)
+        searchLock.current = false;
     }
 
     const updateChatList = (content: string) => {
@@ -140,7 +144,7 @@ export default function Home() {
                     const formData = new FormData();
                     formData.append('file', file);
                     const res = await uploadImg(formData)
-                    setAttachmentList(prevState => [...prevState, {url: res.data, type: 'image'}])
+                    setAttachmentList(prevState => [...prevState, { url: res.data, type: 'image' }])
                 }
             } else if (item.kind === 'string') {
                 event.preventDefault();
@@ -151,7 +155,7 @@ export default function Home() {
                         const formData = new FormData();
                         formData.append('file', blob);
                         const res = await uploadImg(formData)
-                        setAttachmentList(prevState => [...prevState, {url: res.data, type: 'image'}])
+                        setAttachmentList(prevState => [...prevState, { url: res.data, type: 'image' }])
                     } else {
                         setMessage(message + text)
                     }
@@ -160,7 +164,7 @@ export default function Home() {
         }
     }
 
-    const {targetRef, searchRender} = useGlobalSearch()
+    const { targetRef, searchRender } = useGlobalSearch()
 
 
     return (
@@ -168,7 +172,7 @@ export default function Home() {
             {searchRender()}
 
             <div ref={targetRef}
-                 className={'flex flex-col justify-end w-screen h-screen pt-[5vh] pb-[15vh] bg-gray-100'}>
+                className={'flex flex-col justify-end w-screen h-screen pt-[5vh] pb-[15vh] bg-gray-100'}>
                 <div className={'flex-1 overflow-y-auto'}>
                     <Bubble.List
                         roles={roles}
@@ -182,10 +186,10 @@ export default function Home() {
                                 let img = null
                                 if (Array.isArray(chat.imgUrl)) {
                                     img = chat.imgUrl.map((url, index) => {
-                                        return <div key={index}><img src={url} style={{maxWidth: '100%'}} alt=""/></div>
+                                        return <div key={index}><img src={url} style={{ maxWidth: '100%' }} alt="" /></div>
                                     })
                                 } else if (chat.imgUrl) {
-                                    img = <div><img src={chat.imgUrl} style={{maxWidth: '100%'}} alt=""/></div>
+                                    img = <div><img src={chat.imgUrl} style={{ maxWidth: '100%' }} alt="" /></div>
                                 }
                                 return <>
                                     <div>{content}</div>
@@ -218,8 +222,8 @@ export default function Home() {
 
 
                 <Space.Compact className={'w-full pl-[calc(15vw+42px)] pr-[calc(15vw+42px)] mt-[16px]'}>
-                    <TextArea className={'!resize-none'} placeholder="请输入描述" autoSize={{minRows: 1}} value={message} onChange={evt => setMessage(evt.target.value)}
-                           onPressEnter={searchHandler} onPaste={pasteHandler} disabled={searchLoading}/>
+                    <TextArea className={'!resize-none'} placeholder="请输入描述" autoSize={{ minRows: 1 }} value={message} onChange={evt => setMessage(evt.target.value)}
+                        onPressEnter={searchHandler} onPaste={pasteHandler} disabled={searchLoading} />
                     {
                         searchLoading
                             ? <Button onClick={cancelHandler} className={'h-full'}>取消</Button>

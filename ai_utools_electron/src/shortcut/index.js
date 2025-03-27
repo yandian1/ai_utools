@@ -10,11 +10,16 @@ export function shortcutHandler() {
     globalShortcut.register('CommandOrControl+Space', () => {
         const homeWin = HomeWin.getInstance()
         if (homeWin) {
-            homeWin.show();
+            // homeWin.moveTop
+            if (homeWin.isVisible()) {
+                homeWin.hide()
+            } else {
+                homeWin.show()
+            }
         }
     })
 
-    globalShortcut.register('Alt+Z', async () => {
+    globalShortcut.register('CommandOrControl+Shift+X', async () => {
         const screenData = await getScreenData()
         const captureScreenWin = CaptureScreenWin.getInstance()
         if (captureScreenWin.isMinimized()) {

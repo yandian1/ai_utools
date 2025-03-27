@@ -16,8 +16,14 @@ export class HomeWin {
                 nodeIntegration: true,
                 contextIsolation: false,
                 webSecurity: false,
+                devTools: !app.isPackaged,
             }
         });
+
+        if (app.isPackaged) {
+            // 避免点击 alt 键展示隐藏的菜单栏，但该设置会导致无法打开开发者工具，所以只在打包后生效
+            HomeWin.#instance.setMenu(null);
+        }
 
         if (app.isPackaged) {
             HomeWin.#instance.loadURL('http://124.71.130.245:5000/home')
