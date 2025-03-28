@@ -2,12 +2,12 @@ import { UserOutlined } from '@ant-design/icons';
 import { Button, type GetProp, Image, Input, Space, Typography } from 'antd';
 import { Bubble, BubbleProps } from '@ant-design/x';
 import { useRef, useState } from 'react';
-import useGlobalSearch from '../hooks/useGlobalSearch';
+import useGlobalSearch from '@/hooks/useGlobalSearch.tsx';
 import markdownit from 'markdown-it';
-import { chat } from '../utils/openAi.ts';
-import { uploadImg } from '../api';
-import { base64toBlob } from "../utils";
-import { ClipboardImgPrefix, ClipboardImgSuffix } from "../constant";
+import { chat } from '@/utils/openAi.ts';
+import { uploadImg } from '@/api/index.ts';
+import { ClipboardImgPrefix, ClipboardImgSuffix } from "@/constant/index.ts";
+import { base64toBlob } from '@/utils';
 const { ipcRenderer } = require('electron');
 
 const { TextArea } = Input;
@@ -65,7 +65,7 @@ const renderMarkdown: BubbleProps['messageRender'] = (content) => (
     </Typography>
 );
 
-export default function Home() {
+export default function ChatText() {
     const [message, setMessage] = useState('')
     const [searchLoading, setSearchLoading] = useState(false)
     const [chatList, setChatList] = useState([] as ChatItem[])

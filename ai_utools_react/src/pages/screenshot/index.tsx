@@ -1,10 +1,10 @@
 import { Button, Input, Space } from 'antd';
 import { useRef, useState, useEffect } from "react";
 import { v4 } from 'uuid';
-import { base64toBlob, clipboardCopy } from '../utils';
-import { uploadImg } from '../api';
+import { base64toBlob, clipboardCopy } from '@/utils';
+import { uploadImg } from '@/api';
 import { debounce } from 'lodash-es';
-import { ClipboardImgPrefix, ClipboardImgSuffix } from "../constant";
+import { ClipboardImgPrefix, ClipboardImgSuffix } from "@/constant";
 const { ipcRenderer } = require('electron');
 
 export default function Screenshot() {
