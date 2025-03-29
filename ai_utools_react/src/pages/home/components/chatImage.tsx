@@ -1,6 +1,5 @@
 import { useState, KeyboardEvent } from "react";
 import { Input, Button, Space, Spin } from 'antd';
-import { HeaderHeight } from "@/constant";
 const { ipcRenderer } = require('electron');
 
 const { TextArea } = Input;
@@ -14,6 +13,7 @@ export default function ChatImage() {
     const genImage = async () => {
         setGenLoading(true)
         setImgStatus('genLoading')
+
         const res1 = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis", {
             method: "POST",
             headers: {
@@ -139,7 +139,7 @@ export default function ChatImage() {
 
     return (
         <>
-            <div className={`flex flex-col h-[calc(100vh-${HeaderHeight})]`}>
+            <div className={`flex flex-col h-[calc(100vh-72px)]`}>
 
                 {imgRender()}
 

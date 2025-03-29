@@ -6,7 +6,7 @@ import useGlobalSearch from '@/hooks/useGlobalSearch.tsx';
 import markdownit from 'markdown-it';
 import { chat } from '@/utils/openAi.ts';
 import { uploadImg } from '@/api/index.ts';
-import { ClipboardImgPrefix, ClipboardImgSuffix, HeaderHeight } from "@/constant/index.ts";
+import { ClipboardImgPrefix, ClipboardImgSuffix } from "@/constant/index.ts";
 import { base64toBlob } from '@/utils';
 const { ipcRenderer } = require('electron');
 
@@ -169,7 +169,7 @@ export default function ChatText() {
 
     return (
         <>
-            <div ref={targetRef} className={`flex flex-col justify-end h-[calc(100vh-${HeaderHeight})]`}>
+            <div ref={targetRef} className={`flex flex-col justify-end h-[calc(100vh-72px)]`}>
 
                 <div className={'flex-1 overflow-y-auto'}>
                     <Bubble.List

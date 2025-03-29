@@ -1,5 +1,4 @@
 import logo from '@/assets/img/logo.png';
-import { HeaderHeight } from '@/constant';
 import { CloseOutlined, MinusOutlined, BorderOutlined } from '@ant-design/icons';
 import { Space, Button, Modal } from 'antd';
 import { ReactNode, useState, useRef, useEffect } from 'react';
@@ -68,7 +67,7 @@ App.Header = () => {
 
     return (
         <>
-            <div className={`flex items-center pl-[20px] pr-[10px] h-[${HeaderHeight}]`}>
+            <div className={`flex items-center pl-[20px] pr-[10px] h-[72px]`}>
                 <div className='flex justify-between w-full'>
                     <div className='flex'>
                         <img src={logo} className='w-10 h-10 rounded-lg' />
@@ -89,7 +88,7 @@ App.Header = () => {
 App.Body = ({ children }: { children: ReactNode }) => {
     return (
         <>
-            <div className={`h-[calc(100vh-${HeaderHeight})]`}>
+            <div className={`h-[calc(100vh-72px)]`}>
                 {children}
             </div>
         </>
