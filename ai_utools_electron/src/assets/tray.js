@@ -1,6 +1,5 @@
 import path from "node:path";
 import {app, Menu, Tray} from "electron";
-import {CaptureScreenWin} from "../windows/captureScreen/index.js";
 import {HomeWin} from "../windows/home/index.js";
 
 
@@ -24,10 +23,7 @@ export function createTray() {
         {
             label: '退出',
             click: () => {
-                // 当点击退出菜单项时，
-                // destoryTray();
-                // HomeWin.closeInstance();
-                // CaptureScreenWin.closeInstance();
+                // 当点击退出菜单项时，退出应用
                 app.exit();
             }
         }

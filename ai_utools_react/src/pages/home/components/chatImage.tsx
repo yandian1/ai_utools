@@ -143,7 +143,7 @@ export default function ChatImage() {
 
                 {imgRender()}
 
-                <div className='pt-[100px] pb-[150px]'>
+                <div className='pt-[50px] pb-[100px]'>
                     <Space.Compact className={'w-full pl-[calc(15vw+42px)] pr-[calc(15vw+42px)] mt-[16px]'}>
                         <TextArea className={'!resize-none'} placeholder="请输入描述" autoSize={{ minRows: 1, maxRows: 4 }} value={message} onChange={evt => setMessage(evt.target.value)}
                             onPressEnter={enterHandler} onPaste={pasteHandler} disabled={genLoading} />

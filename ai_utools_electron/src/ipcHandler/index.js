@@ -4,7 +4,9 @@ import {ipcMain, app} from "electron";
 import {getWallpaper, setWallpaper} from 'wallpaper';
 import {closeScreenshotHandler, downloadFile, getFileUrlExt} from "../utils/index.js";
 import path from "path";
+import fs from "fs";
 import { randomUUID } from "crypto";
+import log from 'electron-log';
 
 export function ipcHandler() {
     // 打开聊天窗口
@@ -19,11 +21,22 @@ export function ipcHandler() {
     })
     // 设置桌面壁纸
     ipcMain.handle('setDesktop', async (event, data) => {
-        const ext = getFileUrlExt(data.imgUrl);
-        const filename = `${randomUUID()}.${ext}`;
-        const filePath = path.join(app.getAppPath(), '/src/static/img/desktop', filename);
-        await downloadFile(data.imgUrl, filePath);
-        await setWallpaper(filePath);
+        try {
+            
+            const desktopPicturePath = path.join(app.getPath('userData'), 'desktopPicture');
+            if (!fs.existsSync(desktopPicturePath)) {
+                fs.mkdirSync(desktopPicturePath, { recursive: true });
+            }
+
+            const ext = getFileUrlExt(data.imgUrl);
+            const filename = `${randomUUID()}.${ext}`;
+            const filePath = path.join(desktopPicturePath, filename);
+            await downloadFile(data.imgUrl, filePath);
+            await setWallpaper(filePath);
+        } catch (e) {
+            log.error('设置桌面壁纸失败', { e });
+        }
+
     })
     // 最小化
     ipcMain.handle('minimize', async (event, data) => {
