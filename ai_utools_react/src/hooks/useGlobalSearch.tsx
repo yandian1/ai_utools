@@ -35,7 +35,7 @@ export default function useGlobalSearch() {
         });
     }
 
-    const searchRender = () => {
+    const globalSearchRender = () => {
         return (
             <div className={`fixed top-[15px] right-[15px] ${showSearch ? '' : 'hidden'}`}>
                 <Input value={inputContent} ref={inputRef} onChange={evt => setInputContent(evt.target.value)}
@@ -50,6 +50,6 @@ export default function useGlobalSearch() {
 
     return {
         targetRef,
-        searchRender
+        globalSearchRender
     }
 }

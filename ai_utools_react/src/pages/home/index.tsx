@@ -1,26 +1,30 @@
 import { Tabs } from 'antd';
 import ChatText from './components/chatText'
 import ChatImage from './components/chatImage'
+import App from "@/components/app";
 import { useState } from 'react';
+const { ipcRenderer } = require('electron');
 
 export default function Home() {
-
+    const [activeTab, setActiveTab] = useState('text')
+    
     const tabItems = [
-        { key: 'image', label: '图片' },
-        { key: 'text', label: '文字' },
+        { key: 'text', label: '聊天', children: <ChatText /> },
+        { key: 'image', label: '桌面', children: <ChatImage /> },
     ];
-    const [activeKey, setActiveKey] = useState('image');
+
+    ipcRenderer.on("sendImageText", (event: Recordable, data: Recordable) => {
+        setActiveTab('text')
+    })
+    
     return (
         <>
-            <Tabs
-                defaultActiveKey={activeKey}
-                tabPosition="left"
-                items={tabItems}
-                className='fixed top-0 bottom-0 left-0'
-                onChange={tab => {setActiveKey(tab)}}
-            />
-
-            {activeKey === 'text' ? <ChatText /> : <ChatImage />}
+            <App>
+                <App.Header></App.Header>
+                <App.Body>
+                    <Tabs className='h-full' defaultActiveKey={activeTab} items={tabItems} tabPosition="left" />
+                </App.Body>
+            </App>
         </>
     );
 }

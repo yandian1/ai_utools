@@ -1,235 +1,159 @@
-import { UserOutlined } from '@ant-design/icons';
-import { Button, type GetProp, Image, Input, Space, Typography } from 'antd';
-import { Bubble, BubbleProps } from '@ant-design/x';
-import { useRef, useState } from 'react';
-import useGlobalSearch from '@/hooks/useGlobalSearch.tsx';
-import markdownit from 'markdown-it';
-import { chat } from '@/utils/openAi.ts';
-import { uploadImg } from '@/api/index.ts';
-import { ClipboardImgPrefix, ClipboardImgSuffix } from "@/constant/index.ts";
-import { base64toBlob } from '@/utils';
+import { useState, KeyboardEvent } from "react";
+import { Input, Button, Space, Spin, Flex } from 'antd';
+import { HeaderHeight } from "@/constant";
 const { ipcRenderer } = require('electron');
 
 const { TextArea } = Input;
-const md = markdownit({ html: true, breaks: true });
-
-type ChatItem = {
-    role: 'system' | 'user'
-    message?: string
-    imgUrl?: string | string[]
-    loading?: boolean
-}
-type ImageText = {
-    message: string
-    imgUrl: string
-    uuid: string
-}
-type Attachment = {
-    url: string
-    type: 'image'
-}
-const imageTextList: ImageText[] = []
-
-const roles: GetProp<typeof Bubble.List, 'roles'> = {
-    ai: {
-        placement: 'start',
-        avatar: { icon: <UserOutlined />, style: { background: '#fde3cf' } },
-        styles: {
-            avatar: {
-                marginLeft: '15vw'
-            },
-            content: {
-                width: '100%',
-                marginRight: 'calc(15vw + 42px)'
-            }
-        }
-    },
-    local: {
-        placement: 'end',
-        avatar: { icon: <UserOutlined />, style: { background: '#87d068' } },
-        styles: {
-            avatar: {
-                marginRight: '15vw'
-            },
-            content: {
-                width: '100%',
-                marginLeft: 'calc(15vw + 42px)'
-            }
-        }
-    },
-};
-
-const renderMarkdown: BubbleProps['messageRender'] = (content) => (
-    <Typography>
-        <div dangerouslySetInnerHTML={{ __html: md.render(content) }} />
-    </Typography>
-);
 
 export default function ChatImage() {
+    const [imgUrl, setImgUrl] = useState('')
     const [message, setMessage] = useState('')
-    const [searchLoading, setSearchLoading] = useState(false)
-    const [chatList, setChatList] = useState([] as ChatItem[])
-    const [attachmentList, setAttachmentList] = useState([] as Attachment[])
-    const abortController = useRef<AbortController>(null);
-    const searchLock = useRef(false);
+    const [genLoading, setGenLoading] = useState(false)
+    const [imgStatus, setImgStatus] = useState<'default' | 'genLoading' | 'genSuccess' | 'genFailed' | ''>('default')
 
-    ipcRenderer.on("sendImageText", (event: Recordable, data: { message: string, imgUrl: string, uuid: string }) => {
-        if (imageTextList.some((item) => item.uuid === data.uuid)) return
-        imageTextList.push(data)
+    const genImage = async () => {
+        setGenLoading(true)
+        setImgStatus('genLoading')
+        const res1 = await fetch("https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer sk-24d18ac2212447469aa30f217945ef86",
+                "X-DashScope-Async": "enable"
+            },
+            body: JSON.stringify({
+                "model": "wanx2.1-t2i-turbo",
+                "input": {
+                    "prompt": message
+                },
+                "parameters": {
+                    "size": "1024*1024",
+                    "n": 1
+                }
+            }),
+        })
+        .then(response => response.json())
 
-        sendChatRequest(data.message, data.imgUrl)
-    })
+      console.log("res1", res1)
+      const tast_id = res1.output.task_id
+      console.log("tast_id", tast_id)
 
-    const sendChatRequest = async (message: string, imgUrl?: string | string[]) => {
-        if (searchLock.current) return;
-        searchLock.current = true;
-
-        setChatList(prevState => [
-            ...prevState,
-            { role: 'user', message, imgUrl },
-            { role: 'system', loading: true }
-        ])
-
-        setSearchLoading(true)
-
-        abortController.current = new AbortController();
-
-        await chat({
-            message,
-            imgUrl,
-            signal: abortController.current.signal,
-            updateChatList: updateChatList,
-        });
-
-        setSearchLoading(false)
-        searchLock.current = false;
+      const intervalId = setInterval(async () => {
+        const res2 = await fetch(`https://dashscope.aliyuncs.com/api/v1/tasks/${tast_id}`, {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer sk-24d18ac2212447469aa30f217945ef86",
+            },
+          }).then(response => response.json())
+        console.log("res2", res2)
+        const { task_status, results } = res2.output
+        if (task_status === 'SUCCEEDED') {
+            setImgUrl(results[0].url)
+            clearInterval(intervalId)
+            setGenLoading(false)
+            setImgStatus('genSuccess')
+        } else if (task_status === 'FAILED') {
+            clearInterval(intervalId)
+            setGenLoading(false)
+            setImgStatus('genFailed')
+        } else if (task_status === 'UNKNOWN') {
+            clearInterval(intervalId)
+            setGenLoading(false)
+            setImgStatus('genFailed')
+        } else if (task_status === 'SUSPENDED') {
+            setImgStatus('genLoading')
+        } else if (task_status === 'RUNNING') {
+            setImgStatus('genLoading')
+        } else if (task_status === 'PENDING') {
+            setImgStatus('genLoading')
+        } else {
+            setImgStatus('genFailed')
+            clearInterval(intervalId)
+            setGenLoading(false)
+        }
+      }, 1000) 
     }
 
-    const updateChatList = (content: string) => {
-        setChatList(prevState => {
-            const chatItem = prevState[prevState.length - 1];
-            // 更新
-            chatItem.message = md.render(content)
-            chatItem.loading = false
-            return [...prevState]
+    const setDesktop = async () => {
+        ipcRenderer.invoke("setDesktop", {
+            imgUrl: imgUrl,
         })
     }
 
-    const searchHandler = () => {
-        if (searchLoading) return;
-        if (!message.trim()) return;
+    const enterHandler = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+        event.preventDefault();
+        genImage()
+    }
 
-        let imgUrl = undefined
-        if (attachmentList.length) {
-            imgUrl = attachmentList.map(item => item.url);
-        }
-        sendChatRequest(message, imgUrl)
-        setMessage('')
-        setAttachmentList([])
+    const genHandler = () => {
+        genImage()
     }
 
     const cancelHandler = () => {
-        if (abortController.current?.signal.aborted) return
-        abortController.current?.abort();
-        setSearchLoading(false)
     }
 
     const pasteHandler = async (event: Recordable) => {
-        const items = event.clipboardData?.items
-        if (items && items.length > 0) {
-            const item = items[0]
-            if (item.kind === 'file') {
-                const file = item.getAsFile()
-                if (file) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const res = await uploadImg(formData)
-                    setAttachmentList(prevState => [...prevState, { url: res.data, type: 'image' }])
-                }
-            } else if (item.kind === 'string') {
-                event.preventDefault();
-                item.getAsString(async (text: string) => {
-                    if (text && text.startsWith(ClipboardImgPrefix) && text.endsWith(ClipboardImgSuffix)) {
-                        text = text.slice(ClipboardImgSuffix.length, -ClipboardImgSuffix.length)
-                        const blob = base64toBlob(text);
-                        const formData = new FormData();
-                        formData.append('file', blob);
-                        const res = await uploadImg(formData)
-                        setAttachmentList(prevState => [...prevState, { url: res.data, type: 'image' }])
-                    } else {
-                        setMessage(message + text)
-                    }
-                });
-            }
-        }
     }
 
-    const { targetRef, searchRender } = useGlobalSearch()
+    const imgRender = () => {
+        if (imgStatus === 'default') {
+           return (
+            <>
+                <div className="flex flex-1 justify-center items-center">
+                    <div className='w-[200px] h-[200px] bg-gray-200 rounded-[20px]'></div>
+                </div>
+            </>
+           )
+        }
 
+        if (imgStatus === 'genLoading') {
+            return (
+                <>
+                    <div className="flex flex-1 justify-center items-center">
+                        <Spin spinning={true}>
+                            <div className='w-[200px] h-[200px] bg-gray-200 rounded-[20px]'></div>
+                        </Spin>
+                    </div>
+                </>
+            )
+        }
+
+        if (imgStatus === 'genSuccess') {
+            return (
+                <>
+                    <div className="flex flex-col flex-1 overflow-y-auto">
+                        <div className="flex flex-col flex-1 overflow-y-scroll">
+                            <img src={imgUrl} alt="" />
+                        </div>
+                        <div className="text-center pt-[20px]">
+                            <Button type="primary" onClick={setDesktop}>设为桌面</Button>
+                        </div>
+                    </div>
+                </>
+            )
+
+         }
+
+         return null
+    }
 
     return (
         <>
-            {searchRender()}
+            <div className={`flex flex-col h-[calc(100vh-${HeaderHeight})]`}>
 
-            <div ref={targetRef}
-                className={'flex flex-col justify-end w-screen h-screen pt-[5vh] pb-[15vh] bg-gray-100'}>
-                <div className={'flex-1 overflow-y-auto'}>
-                    <Bubble.List
-                        roles={roles}
-                        className={'h-[100%]'}
-                        items={chatList.map((chat, index) => ({
-                            key: index,
-                            role: chat.role === 'user' ? 'local' : 'ai',
-                            content: chat.message,
-                            loading: chat.loading,
-                            messageRender: chat.role === 'system' ? renderMarkdown : (content) => {
-                                let img = null
-                                if (Array.isArray(chat.imgUrl)) {
-                                    img = chat.imgUrl.map((url, index) => {
-                                        return <div key={index}><img src={url} style={{ maxWidth: '100%' }} alt="" /></div>
-                                    })
-                                } else if (chat.imgUrl) {
-                                    img = <div><img src={chat.imgUrl} style={{ maxWidth: '100%' }} alt="" /></div>
-                                }
-                                return <>
-                                    <div>{content}</div>
-                                    {img}
-                                </>
-                            }
-                        }))}
-                    />
+                {imgRender()}
+
+                <div className='pt-[100px] pb-[150px]'>
+                    <Space.Compact className={'w-full pl-[calc(15vw+42px)] pr-[calc(15vw+42px)] mt-[16px]'}>
+                        <TextArea className={'!resize-none'} placeholder="请输入描述" autoSize={{ minRows: 1, maxRows: 4 }} value={message} onChange={evt => setMessage(evt.target.value)}
+                            onPressEnter={enterHandler} onPaste={pasteHandler} disabled={genLoading} />
+                        {
+                            genLoading
+                                ? <Button onClick={cancelHandler}>取消</Button>
+                                : <Button onClick={genHandler}>生成</Button>
+                        }
+                    </Space.Compact>
                 </div>
-
-                {
-                    attachmentList.length > 0 && (
-                        <Space className={'w-full pl-[calc(15vw+42px)] pr-[calc(15vw+42px)] mt-[16px]'}>
-                            {
-                                attachmentList.map((item, index) => {
-                                    return (
-                                        <div key={index}>
-                                            <Image
-                                                width={100}
-                                                src={item.url}
-                                            />
-                                        </div>
-                                    )
-                                })
-                            }
-                        </Space>
-                    )
-
-                }
-
-
-                <Space.Compact className={'w-full pl-[calc(15vw+42px)] pr-[calc(15vw+42px)] mt-[16px]'}>
-                    <TextArea className={'!resize-none'} placeholder="请输入描述" autoSize={{ minRows: 1 }} value={message} onChange={evt => setMessage(evt.target.value)}
-                        onPressEnter={searchHandler} onPaste={pasteHandler} disabled={searchLoading} />
-                    {
-                        searchLoading
-                            ? <Button onClick={cancelHandler} className={'h-full'}>取消</Button>
-                            : <Button onClick={searchHandler} className={'h-full'}>搜索</Button>
-                    }
-                </Space.Compact>
             </div>
         </>
     );

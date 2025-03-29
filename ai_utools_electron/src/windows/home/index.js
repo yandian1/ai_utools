@@ -10,6 +10,7 @@ export class HomeWin {
         HomeWin.#instance = new BrowserWindow({
             width: 800,
             height: 600,
+            frame: false, // 无边框
             autoHideMenuBar: true,
             icon: path.join(app.getAppPath(), '/src/static/img/tray.png'),
             webPreferences: {
@@ -32,28 +33,28 @@ export class HomeWin {
         }
 
         // 监听窗口关闭事件，实现最小化
-        HomeWin.#instance.on('close', (event) => {
-            const index = dialog.showMessageBoxSync({
-                type: 'question',
-                buttons: ['是', '否'],
-                title: '提示',
-                message: '是否最小化托盘？',
-            })
+        // HomeWin.#instance.on('close', (event) => {
+        //     const index = dialog.showMessageBoxSync({
+        //         type: 'question',
+        //         buttons: ['是', '否'],
+        //         title: '提示',
+        //         message: '是否最小化托盘？',
+        //     })
 
-            if (index === 0) {
-                // 最小化托盘
-                // 阻止默认关闭事件
-                event.preventDefault();
+        //     if (index === 0) {
+        //         // 最小化托盘
+        //         // 阻止默认关闭事件
+        //         event.preventDefault();
 
-                // 设置窗口不显示在任务栏中
-                HomeWin.#instance.setSkipTaskbar(true);
-                // 隐藏窗口
-                HomeWin.#instance.hide();
-            } else if (index === 1) {
-                // 退出程序
-                app.exit();
-            }
-        });
+        //         // 设置窗口不显示在任务栏中
+        //         HomeWin.#instance.setSkipTaskbar(true);
+        //         // 隐藏窗口
+        //         HomeWin.#instance.hide();
+        //     } else if (index === 1) {
+        //         // 退出程序
+        //         app.exit();
+        //     }
+        // });
 
 
         return HomeWin.#instance

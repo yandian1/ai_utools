@@ -43,8 +43,11 @@ export function createTray() {
     trayInstance.on('click', () => {
         // 根据HomeWin实例的可见性，决定是隐藏还是显示窗口
         if (instance.isVisible()) {
+            instance.setSkipTaskbar(true);
             instance.hide();
         } else {
+            // 在任务栏显示
+            instance.setSkipTaskbar(false);
             instance.show();
         }
     });
